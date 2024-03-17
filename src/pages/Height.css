@@ -1,0 +1,50 @@
+.app-bar {
+    display: flex;
+    justify-content: center;
+  }
+  
+  .app-bar .MuiToolbar-root {
+    display: flex;
+    justify-content: center;
+  }
+  
+  .height-text {
+    margin-left: 700px;
+    flex-grow: 1;
+  }
+  
+  .pdf-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    margin-top: 20px;
+    margin-left: 10px;
+    cursor: pointer;
+  }
+  
+  .pdf-button:hover {
+    background-color: #0056b3;
+  }
+  
+  .excel-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    margin-top: 20px;
+    margin-left: 40px;
+    cursor: pointer;
+  }
+  
+  .excel-button:hover {
+    background-color: #0056b3;
+  }
+  
+  .table-container {
+    margin-top: 10px; 
+    width: 100%;
+    border-collapse: collapse;
+  }
