@@ -1,0 +1,18 @@
+.app-bar {
+    display: flex;
+    justify-content: center;
+  }
+  
+  .app-bar .MuiToolbar-root {
+    display: flex;
+    justify-content: center;
+  }
+  .education-text {
+    margin-left: 700px;
+    flex-grow: 1;
+  }
+  
+.education-container {
+    margin-top: 20px;
+    margin-left: 50px;
+  }

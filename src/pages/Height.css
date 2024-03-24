@@ -48,3 +48,8 @@
     width: 100%;
     border-collapse: collapse;
   }
+
+  .image{
+    margin-top: 10px; 
+    margin-left: 60px;
+  }

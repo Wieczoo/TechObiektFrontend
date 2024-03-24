@@ -1,6 +1,48 @@
-  
-  .data-text {
-    margin-left: 720px;
-    flex-grow: 1;
-  }
-  
+.data-text {
+  margin-left: 720px;
+  flex-grow: 1;
+}
+
+.height-container {
+  margin-top: 80px;
+  margin-left: 50px;
+}
+
+.prisoners-container {
+  margin-top: 20px;
+  margin-left: 50px;
+}
+
+.vaccination-container {
+  margin-top: 20px;
+  margin-left: 50px;
+}
+
+.button-container {
+  margin-top: 80px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.button-item {
+  margin: 100px;
+  width: 360px; 
+  height: 100px;
+}
+
+.button-image {
+  display: block;
+  width: 100px; /* Dostosuj szerokość obrazka według potrzeb */
+  margin-top: 10px;
+}
+
+.button-info {
+  font-size: 12px;
+  margin-top: 5px;
+  text-align: center;
+}
+.statistics-button-container {
+  margin-top: -40px;
+  margin-left: 600px;
+}

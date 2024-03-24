@@ -4,13 +4,14 @@ import { saveAs } from 'file-saver';
 import { Document, Page, Text, View, StyleSheet, pdf } from '@react-pdf/renderer';
 import { FaFilePdf, FaFileExcel } from 'react-icons/fa';
 import * as XLSX from 'xlsx';
+import Chart from 'chart.js/auto';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import './Height.css';
-
+import Diagram1 from '../images/height_chart.png.png';
 interface Height {
   id: string;
   nazwa_zmiennej: string;
@@ -37,9 +38,35 @@ const styles = StyleSheet.create({
 const HeightPage: React.FC = () => {
   const [heights, setHeights] = useState<Height[]>([]);
   const [selectedTab, setSelectedTab] = useState<string>('date');
-  const [growthAnalysis, setGrowthAnalysis] = useState<string>(''); // Wynik analizy wzrostu
-  const [ageGroupAnalysis, setAgeGroupAnalysis] = useState<string>(''); // Analiza wysokości dla grup wiekowych
+  const [growthAnalysis, setGrowthAnalysis] = useState<string>(''); 
+  const [ageGroupAnalysis, setAgeGroupAnalysis] = useState<string>(''); 
+  const [meanHeight, setMeanHeight] = useState<number>(0);
+  const [medianHeight, setMedianHeight] = useState<number>(0);
+  const [standardDeviation, setStandardDeviation] = useState<number>(0);
+  const [tallestCountry, setTallestCountry] = useState<string>(''); 
+  const [tallestCountryHeight, setTallestCountryHeight] = useState<number>(0); 
 
+  useEffect(() => {
+    const fetchDataAndUpdateState = async () => {
+      try {
+        const response = await axios.get<any>('https://localhost:7119/api/Height/tallest-country');
+        console.log('Full response from tallest country endpoint:', response);
+        if (response.data) {
+          setTallestCountry(response.data.tallestCountry);
+          setTallestCountryHeight(response.data.averageHeight);
+          console.log("Updated tallest country height:", response.data.tallestCountryHeight); 
+        }
+      } catch (error) {
+        console.error('Error fetching tallest country data:', error);
+      }
+    };
+  
+    fetchDataAndUpdateState();
+  }, []);
+  
+  
+  
+  
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -53,6 +80,27 @@ const HeightPage: React.FC = () => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const meanHeightResponse = await axios.get<number>('https://localhost:7119/api/Height/mean');
+        const medianHeightResponse = await axios.get<number>('https://localhost:7119/api/Height/median');
+        const standardDeviationResponse = await axios.get<number>('https://localhost:7119/api/Height/standard-deviation');
+  
+        
+        setMeanHeight(meanHeightResponse.data);
+        setMedianHeight(medianHeightResponse.data);
+        setStandardDeviation(standardDeviationResponse.data);
+      } catch (error) {
+        console.error('Error fetching analysis data:', error);
+      }
+    };
+  
+    fetchData();
+  }, []);
+
+  
+  
   const handleExportToPDF = async () => {
     const doc = (
       <Document>
@@ -80,6 +128,45 @@ const HeightPage: React.FC = () => {
     saveAs(pdfBlob, 'heights.pdf');
   };
 
+  const handleExportDiagramToPDF = async () => {
+    const doc = (
+      <Document>
+        <Page size="A4" style={styles.page}>
+          <View style={styles.section}>
+            <img src={Diagram1} alt="Diagram" className="image" />
+          </View>
+        </Page>
+      </Document>
+    );
+
+    const pdfBlob = await pdf(doc).toBlob();
+    saveAs(pdfBlob, 'height_diagram.pdf');
+  };
+
+  const handleExportAnalysisToPDF = async () => {
+    const doc = (
+      <Document>
+        <Page size="A4" style={styles.page}>
+          <View style={styles.section}>
+            <Text>Analiza wzrostu: {growthAnalysis}</Text>
+            <Text>Analiza wysokości dla grup wiekowych:</Text>
+            {ageGroupAnalysis.split('\n').map((line, index) => (
+              <Text key={index}>{line}</Text>
+            ))}
+            <Text>Średnia wysokość: {meanHeight}</Text>
+            <Text>Mediana wysokości: {medianHeight}</Text>
+            <Text>Odchylenie standardowe: {standardDeviation}</Text>
+            <Text>Nazwa kraju: {tallestCountry}</Text>
+            <Text>Średni wzrost: {tallestCountryHeight}</Text>
+          </View>
+        </Page>
+      </Document>
+    );
+
+    const pdfBlob = await pdf(doc).toBlob();
+    saveAs(pdfBlob, 'height_analysis.pdf');
+  };
+
   const handleExportToExcel = () => {
     const worksheet = XLSX.utils.json_to_sheet(heights);
     const workbook = XLSX.utils.book_new();
@@ -89,6 +176,25 @@ const HeightPage: React.FC = () => {
     saveAs(excelBlob, 'heights.xlsx');
   };
 
+  const handleExportDiagramToExcel = () => {
+    // Tworzenie arkusza kalkulacyjnego z obrazem diagramu
+    const worksheet = XLSX.utils.table_to_sheet(document.getElementById('diagram-table'));
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Diagram');
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const excelBlob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+    saveAs(excelBlob, 'height_diagram.xlsx');
+  };
+  
+  const handleExportAnalysisToExcel = () => {
+    const worksheet = XLSX.utils.table_to_sheet(document.getElementById('analysis-table'));
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Analysis');
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const excelBlob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+    saveAs(excelBlob, 'height_analysis.xlsx');
+  };
+  
   // Dane dla wykresu - dane pobrane
   const chartData = heights.map(height => ({ name: height.nazwa_zmiennej, value: height.wartosc }));
 
@@ -141,10 +247,10 @@ const HeightPage: React.FC = () => {
         </Toolbar>
       </AppBar>
       <div style={{ marginTop: '64px' }}>
-        <button className="pdf-button" onClick={handleExportToPDF}><FaFilePdf />  PDF</button>
-        <button className="excel-button" onClick={handleExportToExcel}><FaFileExcel />  Excel</button>
         {selectedTab === 'date' && (
           <div>
+              <button className="pdf-button" onClick={handleExportToPDF}><FaFilePdf />  PDF</button>
+        <button className="excel-button" onClick={handleExportToExcel}><FaFileExcel />  Excel</button>
             <table className="table-container">
               <thead>
                 <tr>
@@ -177,22 +283,29 @@ const HeightPage: React.FC = () => {
         )}
         {selectedTab === 'diagram' && (
           <div>
-            <BarChart width={800} height={500} data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="value" fill="#8884d8" />
-            </BarChart>
+             <button className="pdf-button" onClick={handleExportDiagramToPDF}><FaFilePdf />  PDF</button>
+             <button className="excel-button" onClick={handleExportDiagramToExcel}><FaFileExcel />  Excel</button>
+            <img src={Diagram1} alt="Diagram" className="image" />  
           </div>
         )}
         {selectedTab === 'analysis' && (
           <div>
+             <button className="pdf-button" onClick={handleExportAnalysisToPDF}><FaFilePdf />  PDF</button>
+             <button className="excel-button" onClick={handleExportAnalysisToExcel}><FaFileExcel />  Excel</button>
             <h2>Analiza wzrostu</h2>
             <p>{growthAnalysis}</p>
             <h2>Analiza wysokości dla grup wiekowych</h2>
             <pre>{ageGroupAnalysis}</pre>
+            <h2>Średnia wysokość: </h2>
+            <p>{meanHeight}</p>
+    <h2>Mediana wysokości:</h2>
+    <p> {medianHeight}</p>
+    <h2>Odchylenie standardowe:</h2>
+     <p>{standardDeviation}</p>
+    <h2>Nazwa kraju: </h2>
+      <p>{tallestCountry}</p>
+      <h2>Średni wzrost:</h2> 
+      <p>{tallestCountryHeight}</p>
           </div>
         )}
       </div>
