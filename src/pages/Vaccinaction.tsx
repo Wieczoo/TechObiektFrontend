@@ -9,6 +9,8 @@ import Toolbar from '@mui/material/Toolbar';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import './Education.css';
+import Diagram1 from '../images/vaccination_chart.png.png';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts'; 
 
 interface VaccinationData {
   id: string;
@@ -37,7 +39,38 @@ const styles = StyleSheet.create({
 const VaccinationDataPage: React.FC = () => {
   const [vaccinationData, setVaccinationData] = useState<VaccinationData[]>([]);
   const [selectedTab, setSelectedTab] = useState<string>('date');
+  const [simpleAnalysis1, setSimpleAnalysis1] = useState<any[]>([]);
+  const [simpleAnalysis2, setSimpleAnalysis2] = useState<any[]>([]);
+  const [simpleAnalysis3, setSimpleAnalysis3] = useState<any[]>([]);
+  const [complexAnalysis, setComplexAnalysis] = useState<any[]>([]);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const simpleAnalysis1Response = await axios.get('https://localhost:7119/api/VaccinationData/analysis/simple1');
+        console.log('Simple Analysis 1:', simpleAnalysis1Response.data);
+        setSimpleAnalysis1(simpleAnalysis1Response.data);
+        
+        const simpleAnalysis2Response = await axios.get('https://localhost:7119/api/VaccinationData/analysis/simple2');
+        console.log('Simple Analysis 2:', simpleAnalysis2Response.data);
+        setSimpleAnalysis2(simpleAnalysis2Response.data);
+        
+        const simpleAnalysis3Response = await axios.get('https://localhost:7119/api/VaccinationData/analysis/simple3');
+        console.log('Simple Analysis 3:', simpleAnalysis3Response.data);
+        setSimpleAnalysis3(simpleAnalysis3Response.data);
+        
+        const complexAnalysisResponse = await axios.get('https://localhost:7119/api/VaccinationData/analysis/complex');
+        console.log('Complex Analysis:', complexAnalysisResponse.data);
+        setComplexAnalysis(complexAnalysisResponse.data);
+      } catch (error) {
+        console.error('Error fetching analysis data:', error);
+      }
+    };
+  
+    fetchData();
+  }, []);
+  
+  
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -88,6 +121,13 @@ const VaccinationDataPage: React.FC = () => {
     saveAs(excelBlob, 'vaccination_data.xlsx');
   };
 
+  const prepareChartData = () => {
+    return simpleAnalysis1.map(item => ({
+      country: item.country,
+      totalVaccinations: item.totalVaccinations
+    }));
+  };
+
   return (
     <div>
       <AppBar position="fixed" className="app-bar">
@@ -101,10 +141,10 @@ const VaccinationDataPage: React.FC = () => {
         </Toolbar>
       </AppBar>
       <div style={{ marginTop: '64px' }}>
-        <button className="pdf-button" onClick={handleExportToPDF}><FaFilePdf />  PDF</button>
-        <button className="excel-button" onClick={handleExportToExcel}><FaFileExcel />  Excel</button>
         {selectedTab === 'date' && (
           <div>
+            <button className="pdf-button" onClick={handleExportToPDF}><FaFilePdf />  PDF</button>
+            <button className="excel-button" onClick={handleExportToExcel}><FaFileExcel />  Excel</button>
             <table className="table-container">
               <thead>
                 <tr>
@@ -138,10 +178,47 @@ const VaccinationDataPage: React.FC = () => {
           </div>
         )}
         {selectedTab === 'diagram' && (
-         <h1> diagram</h1>
+          <div>
+            <h1> diagram</h1>
+            <img src={Diagram1} alt="Diagram" className="image" />  
+            <BarChart width={600} height={300} data={prepareChartData()}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="country" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="totalVaccinations" fill="#8884d8" />
+            </BarChart>
+          </div>
         )}
         {selectedTab === 'analysis' && (
-          <h1> analysis</h1>
+          <div>
+            <h1>Analysis</h1>
+            <h2>Total Vaccinations by Country</h2>
+            <ul>
+              {simpleAnalysis1.map(item => (
+                <li key={item.country}>Country: {item.country}, Total Vaccinations: {item.totalVaccinations}</li>
+              ))}
+            </ul>
+            <h2>Average Vaccinations Per Year</h2>
+            <ul>
+              {simpleAnalysis2.map(item => (
+                <li key={item.year}>Year: {item.year}, Average Vaccinations: {item.averageVaccinations}</li>
+              ))}
+            </ul>
+            <h2>Disease Counts</h2>
+            <ul>
+              {simpleAnalysis3.map(item => (
+                <li key={item.disease}>Disease: {item.disease}, Count: {item.count}</li>
+              ))}
+            </ul>
+            <h2>Total Vaccinations by Time Type</h2>
+            <ul>
+              {complexAnalysis.map(item => (
+                <li key={item.timeType}>Time Type: {item.timeType}, Total Vaccinations: {item.totalVaccinations}</li>
+              ))}
+            </ul>
+          </div>
         )}
       </div>
     </div>

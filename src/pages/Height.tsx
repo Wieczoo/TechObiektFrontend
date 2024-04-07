@@ -94,7 +94,7 @@ const HeightPage: React.FC = () => {
       } catch (error) {
         console.error('Error fetching analysis data:', error);
       }
-    };
+    };  
   
     fetchData();
   }, []);
@@ -234,6 +234,14 @@ const HeightPage: React.FC = () => {
     }
   }, [heights]);
 
+  const prepareChartData = (): { gender: string; value: number }[] => {
+    const data: { gender: string; value: number }[] = [];
+    heights.forEach((height) => {
+      data.push({ gender: height.wiek, value: height.wartosc });
+      
+    });
+    return data;
+  };
   return (
     <div>
       <AppBar position="fixed" className="app-bar">
@@ -286,6 +294,14 @@ const HeightPage: React.FC = () => {
              <button className="pdf-button" onClick={handleExportDiagramToPDF}><FaFilePdf />  PDF</button>
              <button className="excel-button" onClick={handleExportDiagramToExcel}><FaFileExcel />  Excel</button>
             <img src={Diagram1} alt="Diagram" className="image" />  
+            <BarChart width={600} height={300} data={prepareChartData()}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="gender" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="value" fill="#8884d8" />
+            </BarChart>
           </div>
         )}
         {selectedTab === 'analysis' && (

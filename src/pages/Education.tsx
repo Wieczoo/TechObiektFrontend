@@ -9,7 +9,8 @@ import Toolbar from '@mui/material/Toolbar';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import './Education.css';
-
+import Diagram1 from '../images/education_chart.png.png';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 interface Education {
   id: string;
   nazwa_zmiennej: string;
@@ -39,7 +40,37 @@ const styles = StyleSheet.create({
 const EducationPage: React.FC = () => {
   const [educationData, setEducationData] = useState<Education[]>([]);
   const [selectedTab, setSelectedTab] = useState<string>('date');
-
+  const [trendAnalysis, setTrendAnalysis] = useState<any[]>([]);
+  const [distributionBySchoolType, setDistributionBySchoolType] = useState<any[]>([]);
+  const [changeByGender, setChangeByGender] = useState<any[]>([]);
+  const [correlationAnalysis, setCorrelationAnalysis] = useState<string>('');
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const trendAnalysisResponse = await axios.get('https://localhost:7119/api/Education/education-trend-analysis');
+        console.log('Trend Analysis:', trendAnalysisResponse.data);
+        setTrendAnalysis(trendAnalysisResponse.data);
+  
+        const distributionBySchoolTypeResponse = await axios.get('https://localhost:7119/api/Education/education-distribution-by-school-type');
+        console.log('Distribution by School Type:', distributionBySchoolTypeResponse.data);
+        setDistributionBySchoolType(distributionBySchoolTypeResponse.data);
+  
+        const changeByGenderResponse = await axios.get('https://localhost:7119/api/Education/education-change-by-gender');
+        console.log('Change by Gender:', changeByGenderResponse.data);
+        setChangeByGender(changeByGenderResponse.data);
+  
+        const correlationAnalysisResponse = await axios.get('https://localhost:7119/api/Education/education-correlation-analysis');
+        console.log('Correlation Analysis:', correlationAnalysisResponse.data);
+        setCorrelationAnalysis(correlationAnalysisResponse.data);
+      } catch (error) {
+        console.error('Error fetching education data:', error);
+      }
+    };
+  
+    fetchData();
+  }, []);
+  
+  
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -105,10 +136,10 @@ const EducationPage: React.FC = () => {
         </Toolbar>
       </AppBar>
       <div style={{ marginTop: '64px' }}>
-        <button className="pdf-button" onClick={handleExportToPDF}><FaFilePdf />  PDF</button>
-        <button className="excel-button" onClick={handleExportToExcel}><FaFileExcel />  Excel</button>
         {selectedTab === 'date' && (
           <div>
+            <button className="pdf-button" onClick={handleExportToPDF}><FaFilePdf />  PDF</button>
+        <button className="excel-button" onClick={handleExportToExcel}><FaFileExcel />  Excel</button>
             <table className="table-container">
               <thead>
                 <tr>
@@ -146,11 +177,57 @@ const EducationPage: React.FC = () => {
           </div>
         )}
         {selectedTab === 'diagram' && (
+          <div>
          <h1> diagram</h1>
+         <img src={Diagram1} alt="Diagram" className="image" />  
+         <BarChart width={600} height={300} data={distributionBySchoolType}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="schoolType" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="totalValue" fill="#8884d8" />
+            </BarChart>
+         </div>
         )}
-        {selectedTab === 'analysis' && (
-          <h1> analysis</h1>
-        )}
+      {selectedTab === 'analysis' && (
+  <div>
+    <h1>Analysis</h1>
+    <div>
+      <h2>Trend Analysis</h2>
+      {trendAnalysis.map((analysis, index) => (
+        <div key={index}>
+          <p>Year: {analysis.year}, Total Value: {analysis.totalValue}</p>
+        </div>
+      ))}
+    </div>
+    <div>
+      <h2>Distribution by School Type</h2>
+      <ul>
+        {distributionBySchoolType.map(item => (
+          <li key={item.schoolType}>
+            School Type: {item.schoolType}, Total Value: {item.totalValue}
+          </li>
+        ))}
+      </ul>
+    </div>
+    <div>
+      <h2>Change by Gender</h2>
+      <ul>
+        {changeByGender.map(item => (
+          <li key={item.gender}>
+            Gender: {item.gender}, Total Value: {item.totalValue}
+          </li>
+        ))}
+      </ul>
+    </div>
+    <div>
+      <h2>Correlation Analysis</h2>
+      <p>{correlationAnalysis}</p>
+    </div>
+  </div>
+)}
+
       </div>
     </div>
   );
