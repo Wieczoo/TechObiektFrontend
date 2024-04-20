@@ -150,7 +150,18 @@ const EducationPage: React.FC = () => {
       console.error('Error saving changes:', error);
     }
   };
-  
+
+  const handleDelete = async (id: string) => {
+    try {
+      const response = await axios.delete(`https://localhost:7119/api/Education/${id}`);
+      console.log('Deleted row:', response.data);
+      const updatedEducationData = educationData.filter(education => education.id !== id);
+      setEducationData(updatedEducationData);
+    } catch (error) {
+      console.error('Error deleting row:', error);
+    }
+  };
+
   return (
     <div>
       <AppBar position="fixed" className="app-bar">
@@ -334,9 +345,15 @@ const EducationPage: React.FC = () => {
               </td>
               <td>
                 {isEditing && editRow?.id === education.id ? (
-                  <button onClick={handleSave}>Save</button>
+                  <div>
+                    <button onClick={handleSave}>Save</button>
+                    <button onClick={() => { setIsEditing(false); setEditRow(null); }}>Cancel</button>
+                  </div>
                 ) : (
-                  <button onClick={() => handleEdit(education)}>Edit</button>
+                  <div>
+                    <button onClick={() => handleEdit(education)}>Edit</button>
+                    <button onClick={() => handleDelete(education.id)}>Usuń</button>
+                  </div>
                 )}
               </td>
             </tr>
@@ -409,23 +426,23 @@ const EducationPage: React.FC = () => {
     </div>
     <div>
       <h2>Distribution by School Type</h2>
-      <ul>
-        {distributionBySchoolType.map(item => (
-          <li key={item.schoolType}>
-            School Type: {item.schoolType}, Total Value: {item.totalValue}
-          </li>
-        ))}
-      </ul>
+      {distributionBySchoolType.map((distribution, index) => (
+        <div key={index}>
+          <p>School Type: {distribution.schoolType}, Total Value: {distribution.totalValue}</p>
+        </div>
+      ))}
     </div>
     <div>
       <h2>Change by Gender</h2>
-      <ul>
-        {changeByGender.map(item => (
-          <li key={item.gender}>
-            Gender: {item.gender}, Total Value: {item.totalValue}
-          </li>
-        ))}
-      </ul>
+      {changeByGender.map((change, index) => (
+        <div key={index}>
+          <p>Gender: {change.gender}, Total Change: {change.totalChange}</p>
+        </div>
+      ))}
+    </div>
+    <div>
+      <h2>Correlation Analysis</h2>
+      <p>{correlationAnalysis}</p>
     </div>
   </div>
 )}
@@ -433,4 +450,5 @@ const EducationPage: React.FC = () => {
     </div>
   );
 };
+
 export default EducationPage;

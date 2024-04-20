@@ -106,6 +106,7 @@ const PrisonersPage: React.FC = () => {
     const pdfBlob = await pdf(doc).toBlob();
     saveAs(pdfBlob, 'prisoners.pdf');
   };
+
   const handleExportDiagramToPDF = async () => {
     const doc = (
       <Document>
@@ -193,6 +194,16 @@ const PrisonersPage: React.FC = () => {
   const handleEdit = (row: Prisoners) => {
     setIsEditing(true);
     setEditRow(row);
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await axios.delete(`https://localhost:7119/api/Prisoners/${id}`);
+      const updatedPrisonersData = prisonersData.filter(prisoner => prisoner.id !== id);
+      setPrisonersData(updatedPrisonersData);
+    } catch (error) {
+      console.error('Error deleting prisoner:', error);
+    }
   };
   
   const handleSave = async () => {
@@ -340,9 +351,15 @@ const PrisonersPage: React.FC = () => {
               </td>
               <td>
                 {isEditing && editRow?.id === prisoner.id ? (
-                  <button onClick={handleSave}>Save</button>
+                  <div>
+                    <button onClick={handleSave}>Save</button>
+                    <button onClick={() => setIsEditing(false)}>Cancel</button>
+                  </div>
                 ) : (
-                  <button onClick={() => handleEdit(prisoner)}>Edit</button>
+                  <div>
+                    <button onClick={() => handleEdit(prisoner)}>Edit</button>
+                    <button onClick={() => handleDelete(prisoner.id)}>Usuń</button>
+                  </div>
                 )}
               </td>
             </tr>
