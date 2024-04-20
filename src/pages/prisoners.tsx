@@ -22,6 +22,7 @@ interface Prisoners {
   informationTypeUnitofMeasure: string;
   year: number;
   value: number;
+  [key: string]: string | number; 
 }
 
 const styles = StyleSheet.create({
@@ -43,26 +44,27 @@ const PrisonersPage: React.FC = () => {
   const [prisonerTypeDistribution, setPrisonerTypeDistribution] = useState<any[]>([]);
   const [prisonersInCountriesByYear, setPrisonersInCountriesByYear] = useState<any[]>([]);
   const [trendAnalysis, setTrendAnalysis] = useState<any[]>([]);
+  const [searchValue, setSearchValue] = useState<string>('');
+  const [xValue, setXValue] = useState<string>('');
+  const [yValue, setYValue] = useState<string>('');
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [editRow, setEditRow] = useState<Prisoners| null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const averagePrisonersResponse = await axios.get('https://localhost:7119/api/prisoners/average-prisoners-per-country');
         setAveragePrisonersPerCountry(averagePrisonersResponse.data);
-
         const prisonerTypeDistributionResponse = await axios.get('https://localhost:7119/api/prisoners/prisoner-type-distribution');
         setPrisonerTypeDistribution(prisonerTypeDistributionResponse.data);
-
         const prisonersInCountriesByYearResponse = await axios.get('https://localhost:7119/api/prisoners/prisoners-in-countries-by-year');
         setPrisonersInCountriesByYear(prisonersInCountriesByYearResponse.data);
-
         const trendAnalysisResponse = await axios.get('https://localhost:7119/api/prisoners/trend-analysis');
         setTrendAnalysis(trendAnalysisResponse.data);
       } catch (error) {
         console.error('Error fetching prisoners data:', error);
       }
     };
-
     fetchData();
   }, []);
 
@@ -75,7 +77,6 @@ const PrisonersPage: React.FC = () => {
         console.error('Error fetching prisoners data:', error);
       }
     };
-
     fetchData();
   }, []);
 
@@ -102,7 +103,6 @@ const PrisonersPage: React.FC = () => {
         </Page>
       </Document>
     );
-
     const pdfBlob = await pdf(doc).toBlob();
     saveAs(pdfBlob, 'prisoners.pdf');
   };
@@ -117,7 +117,6 @@ const PrisonersPage: React.FC = () => {
         </Page>
       </Document>
     );
-  
     const pdfBlob = await pdf(doc).toBlob();
     saveAs(pdfBlob, 'diagram.pdf');
   };
@@ -191,6 +190,33 @@ const PrisonersPage: React.FC = () => {
     saveAs(excelBlob, 'analysis.xlsx');
   };
   
+  const handleEdit = (row: Prisoners) => {
+    setIsEditing(true);
+    setEditRow(row);
+  };
+  
+  const handleSave = async () => {
+    try {
+      if (editRow) {
+        const response = await axios.put(`https://localhost:7119/api/Prisoners/${editRow.id}`, editRow);
+        console.log('Saved changes:', response.data);
+        const updatedPrisonersData = prisonersData.map(prisoner => {
+          if (prisoner.id === editRow.id) {
+            return editRow;
+          }
+          return prisoner;
+        });
+        setPrisonersData(updatedPrisonersData);
+        setIsEditing(false);
+        setEditRow(null);
+      } else {
+        console.error('No row to save');
+      }
+    } catch (error) {
+      console.error('Error saving changes:', error);
+    }
+  };
+  
   return (
     <div>
       <AppBar position="fixed" className="app-bar">
@@ -204,84 +230,199 @@ const PrisonersPage: React.FC = () => {
         </Toolbar>
       </AppBar>
       <div style={{ marginTop: '64px' }}>
-        {selectedTab === 'date' && (
-          <div>
-              <button className="pdf-button" onClick={handleExportToPDF}><FaFilePdf />  PDF</button>
-        <button className="excel-button" onClick={handleExportToExcel}><FaFileExcel />  Excel</button>
-            <table className="table-container">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Nazwa zmiennej</th>
-                  <th>Kraj</th>
-                  <th>Typ więźnia</th>
-                  <th>Kategorie więźniów</th>
-                  <th>Płeć</th>
-                  <th>Typ informacji z jednostką miary</th>
-                  <th>Rok</th>
-                  <th>Wartość</th>
-                </tr>
-              </thead>
-              <tbody>
-                {prisonersData.map((prisoner, index) => (
-                  <tr key={prisoner.id} style={{ backgroundColor: index % 2 === 0 ? '#f2f2f2' : 'transparent' }}>
-                    <td>{prisoner.id}</td>
-                    <td>{prisoner.variableName}</td>
-                    <td>{prisoner.country}</td>
-                    <td>{prisoner.prisonerType}</td>
-                    <td>{prisoner.categoriesInmates}</td>
-                    <td>{prisoner.sex}</td>
-                    <td>{prisoner.informationTypeUnitofMeasure}</td>
-                    <td>{prisoner.year}</td>
-                    <td>{prisoner.value}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-        {selectedTab === 'diagram' && (
-          <div>
-             <button className="pdf-button" onClick={handleExportDiagramToPDF}><FaFilePdf />  PDF</button>
-             <button className="excel-button" onClick={handleExportDiagramToExcel}><FaFileExcel />  Excel</button>
-              <img src={Diagram1} alt="Diagram" className="image" />  
-            <BarChart width={600} height={300} data={prisonersData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="sex" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="value" fill="#8884d8" />
-            </BarChart>
-          </div>
-        )}
+      {selectedTab === 'date' && (
+  <div>
+    <input
+      type="text"
+      value={searchValue}
+      onChange={(e) => setSearchValue(e.target.value)}
+      placeholder="Wyszukaj..."
+    />
+    <button className="pdf-button" onClick={handleExportToPDF}><FaFilePdf />  PDF</button>
+    <button className="excel-button" onClick={handleExportToExcel}><FaFileExcel />  Excel</button>
+    <table className="table-container">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nazwa zmiennej</th>
+          <th>Kraj</th>
+          <th></th>
+          <th>Kategorie więźniów</th>
+          <th>Płeć</th>
+          <th>Typ informacji z jednostką miary</th>
+          <th>Rok</th>
+          <th>Wartość</th>
+          <th>Akcje</th>
+        </tr>
+      </thead>
+      <tbody>
+        {prisonersData
+          .filter(prisoner =>
+            prisoner.variableName.toLowerCase().includes(searchValue.toLowerCase())
+          )
+          .map((prisoner, index) => (
+            <tr key={index} style={{ backgroundColor: index % 2 === 0 ? '#f2f2f2' : 'transparent' }}>
+              <td>{prisoner.id}</td>
+              <td>{prisoner.variableName}</td>
+              <td>
+                {isEditing && editRow?.id === prisoner.id ? (
+                  <input
+                    type="text"
+                    value={editRow.country}
+                    onChange={(e) => setEditRow({ ...editRow, country: e.target.value })}
+                    style={{ maxWidth: '52px' }}
+                  />
+                ) : (
+                  prisoner.country
+                )}
+              </td>
+              <td>
+              </td>
+              <td>
+                {isEditing && editRow?.id === prisoner.id ? (
+                  <input
+                    type="text"
+                    value={editRow.categoriesInmates}
+                    onChange={(e) => setEditRow({ ...editRow, categoriesInmates: e.target.value })}
+                    style={{ maxWidth: '65px' }}
+                  />
+                ) : (
+                  prisoner.categoriesInmates
+                )}
+              </td>
+              <td>
+                {isEditing && editRow?.id === prisoner.id ? (
+                  <input
+                    type="text"
+                    value={editRow.sex}
+                    onChange={(e) => setEditRow({ ...editRow, sex: e.target.value })}
+                    style={{ maxWidth: '80px' }}
+                  />
+                ) : (
+                  prisoner.sex
+                )}
+              </td>
+              <td>
+                {isEditing && editRow?.id === prisoner.id ? (
+                  <input
+                    type="text"
+                    value={editRow.informationTypeUnitofMeasure}
+                    onChange={(e) => setEditRow({ ...editRow, informationTypeUnitofMeasure: e.target.value })}
+                    style={{ maxWidth: '120px' }}
+                  />
+                ) : (
+                  prisoner.informationTypeUnitofMeasure
+                )}
+              </td>
+              <td>
+                {isEditing && editRow?.id === prisoner.id ? (
+                  <input
+                    type="text"
+                    value={editRow.year}
+                    onChange={(e) => setEditRow({ ...editRow, year: Number(e.target.value) })}
+                    style={{ maxWidth: '45px' }}
+                  />
+                ) : (
+                  prisoner.year
+                )}
+              </td>
+              <td>
+                {isEditing && editRow?.id === prisoner.id ? (
+                  <input
+                    type="text"
+                    value={editRow.value}
+                    onChange={(e) => setEditRow({ ...editRow, value: Number(e.target.value) })}
+                    style={{ maxWidth: '45px' }}
+                  />
+                ) : (
+                  prisoner.value
+                )}
+              </td>
+              <td>
+                {isEditing && editRow?.id === prisoner.id ? (
+                  <button onClick={handleSave}>Save</button>
+                ) : (
+                  <button onClick={() => handleEdit(prisoner)}>Edit</button>
+                )}
+              </td>
+            </tr>
+          ))}
+      </tbody>
+    </table>
+  </div>
+)}
+       {selectedTab === 'diagram' && (
+  <div>
+    <img src={Diagram1} alt="Diagram" className="image" />  
+    <h1>Diagram</h1>
+    <h2>Choose options</h2>
+    <div>
+      <label htmlFor="x-value">X Value:</label>
+      <select id="x-value" value={xValue} onChange={(e) => setXValue(e.target.value)}>
+        <option value="">Choose X Value</option>
+        <option value="id">ID</option>
+        <option value="variableName">Variable Name</option>
+        <option value="country">Country</option>
+        <option value="prisonerType">Prisoner Type</option>
+        <option value="categoriesInmates">Categories of Inmates</option>
+        <option value="sex">Sex</option>
+        <option value="informationTypeUnitofMeasure">Information Type with Unit of Measure</option>
+        <option value="year">Year</option>
+        <option value="value">Value</option>
+      </select>
+    </div>
+    <div>
+      <label htmlFor="y-value">Y Value:</label>
+      <select id="y-value" value={yValue} onChange={(e) => setYValue(e.target.value)}>
+        <option value="">Choose Y Value</option>
+        <option value="id">ID</option>
+        <option value="variableName">Variable Name</option>
+        <option value="country">Country</option>
+        <option value="prisonerType">Prisoner Type</option>
+        <option value="categoriesInmates">Categories of Inmates</option>
+        <option value="sex">Sex</option>
+        <option value="informationTypeUnitofMeasure">Information Type with Unit of Measure</option>
+        <option value="year">Year</option>
+        <option value="value">Value</option>
+      </select>
+    </div>
+    {xValue && yValue && (
+      <div>
+        <BarChart width={600} height={300} data={prisonersData.map(data => ({ [xValue]: data[xValue], [yValue]: data[yValue] }))}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey={xValue} />
+          <YAxis />
+          <Tooltip />
+          <Legend />
+          <Bar dataKey={yValue} fill="#8884d8" />
+        </BarChart>
+      </div>
+    )}
+  </div>
+)}
         {selectedTab === 'analysis' && (
           <div>
              <button className="pdf-button" onClick={handleExportAnalysisToPDF}><FaFilePdf />  PDF</button>
              <button className="excel-button" onClick={handleExportAnalysisToExcel}><FaFileExcel />  Excel</button>
             <h1>Analysis</h1>
-
             <h2>Average Prisoners per Country</h2>
             <ul>
               {averagePrisonersPerCountry.map((item, index) => (
                 <li key={index}>{item.country}: {item.averagePrisoners}</li>
               ))}
             </ul>
-
             <h2>Prisoner Type Distribution</h2>
             <ul>
               {prisonerTypeDistribution.map((item, index) => (
                 <li key={index}>{item.prisonerType}: {item.totalPrisoners}</li>
               ))}
             </ul>
-
             <h2>Prisoners in Countries by Year</h2>
             <ul>
               {prisonersInCountriesByYear.map((item, index) => (
                 <li key={index}>{item.country}: {item.totalPrisoners}</li>
               ))}
             </ul>
-
             <h2>Trend Analysis</h2>
             <ul>
               {trendAnalysis.map((item, index) => (
@@ -294,5 +435,4 @@ const PrisonersPage: React.FC = () => {
     </div>
   );
 };
-
 export default PrisonersPage;

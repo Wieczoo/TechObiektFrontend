@@ -11,6 +11,7 @@ import Tabs from '@mui/material/Tabs';
 import './Education.css';
 import Diagram1 from '../images/education_chart.png.png';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+
 interface Education {
   id: string;
   nazwa_zmiennej: string;
@@ -23,6 +24,7 @@ interface Education {
   rok_szkolny: string;
   wartosc: number;
   flaga: number;
+  [key: string]: string | number; 
 }
 
 const styles = StyleSheet.create({
@@ -44,21 +46,24 @@ const EducationPage: React.FC = () => {
   const [distributionBySchoolType, setDistributionBySchoolType] = useState<any[]>([]);
   const [changeByGender, setChangeByGender] = useState<any[]>([]);
   const [correlationAnalysis, setCorrelationAnalysis] = useState<string>('');
+  const [searchValue, setSearchValue] = useState<string>('');
+  const [xValue, setXValue] = useState<string>('');
+  const [yValue, setYValue] = useState<string>('');
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [editRow, setEditRow] = useState<Education | null>(null);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         const trendAnalysisResponse = await axios.get('https://localhost:7119/api/Education/education-trend-analysis');
         console.log('Trend Analysis:', trendAnalysisResponse.data);
         setTrendAnalysis(trendAnalysisResponse.data);
-  
         const distributionBySchoolTypeResponse = await axios.get('https://localhost:7119/api/Education/education-distribution-by-school-type');
         console.log('Distribution by School Type:', distributionBySchoolTypeResponse.data);
         setDistributionBySchoolType(distributionBySchoolTypeResponse.data);
-  
         const changeByGenderResponse = await axios.get('https://localhost:7119/api/Education/education-change-by-gender');
         console.log('Change by Gender:', changeByGenderResponse.data);
         setChangeByGender(changeByGenderResponse.data);
-  
         const correlationAnalysisResponse = await axios.get('https://localhost:7119/api/Education/education-correlation-analysis');
         console.log('Correlation Analysis:', correlationAnalysisResponse.data);
         setCorrelationAnalysis(correlationAnalysisResponse.data);
@@ -66,10 +71,8 @@ const EducationPage: React.FC = () => {
         console.error('Error fetching education data:', error);
       }
     };
-  
     fetchData();
   }, []);
-  
   
   useEffect(() => {
     const fetchData = async () => {
@@ -80,7 +83,6 @@ const EducationPage: React.FC = () => {
         console.error('Error fetching education data:', error);
       }
     };
-
     fetchData();
   }, []);
 
@@ -109,7 +111,6 @@ const EducationPage: React.FC = () => {
         </Page>
       </Document>
     );
-
     const pdfBlob = await pdf(doc).toBlob();
     saveAs(pdfBlob, 'education.pdf');
   };
@@ -123,6 +124,33 @@ const EducationPage: React.FC = () => {
     saveAs(excelBlob, 'education.xlsx');
   };
 
+  const handleEdit = (row: Education) => {
+    setIsEditing(true);
+    setEditRow(row);
+  };
+
+  const handleSave = async () => {
+    try {
+      if (editRow) {
+        const response = await axios.put(`https://localhost:7119/api/Education/${editRow.id}`, editRow);
+        console.log('Saved changes:', response.data);
+        const updatedEducationData = educationData.map(education => {
+          if (education.id === editRow.id) {
+            return editRow;
+          }
+          return education;
+        });
+        setEducationData(updatedEducationData);
+        setIsEditing(false);
+        setEditRow(null);
+      } else {
+        console.error('No row to save');
+      }
+    } catch (error) {
+      console.error('Error saving changes:', error);
+    }
+  };
+  
   return (
     <div>
       <AppBar position="fixed" className="app-bar">
@@ -136,60 +164,238 @@ const EducationPage: React.FC = () => {
         </Toolbar>
       </AppBar>
       <div style={{ marginTop: '64px' }}>
-        {selectedTab === 'date' && (
-          <div>
-            <button className="pdf-button" onClick={handleExportToPDF}><FaFilePdf />  PDF</button>
-        <button className="excel-button" onClick={handleExportToExcel}><FaFileExcel />  Excel</button>
-            <table className="table-container">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Nazwa zmiennej</th>
-                  <th>Kraj</th>
-                  <th>Województwo</th>
-                  <th>Typ szkoły</th>
-                  <th>Płeć absolwenta</th>
-                  <th>Rodzaj wskaźnika</th>
-                  <th>Typ informacji z jednostką miary</th>
-                  <th>Rok szkolny</th>
-                  <th>Wartość</th>
-                  <th>Flaga</th>
-                </tr>
-              </thead>
-              <tbody>
-                {educationData.map((education, index) => (
-                  <tr key={education.id} style={{ backgroundColor: index % 2 === 0 ? '#f2f2f2' : 'transparent' }}>
-                    <td>{education.id}</td>
-                    <td>{education.nazwa_zmiennej}</td>
-                    <td>{education.kraj}</td>
-                    <td>{education.wojewodztwo}</td>
-                    <td>{education.typ_szkoly}</td>
-                    <td>{education.plec_absolwenta}</td>
-                    <td>{education.rodzaj_wskaznika}</td>
-                    <td>{education.typ_informacji_z_jednostka_miary}</td>
-                    <td>{education.rok_szkolny}</td>
-                    <td>{education.wartosc}</td>
-                    <td>{education.flaga}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-        {selectedTab === 'diagram' && (
-          <div>
-         <h1> diagram</h1>
-         <img src={Diagram1} alt="Diagram" className="image" />  
-         <BarChart width={600} height={300} data={distributionBySchoolType}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="schoolType" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="totalValue" fill="#8884d8" />
-            </BarChart>
-         </div>
-        )}
+      {selectedTab === 'date' && (
+  <div>
+    <input
+      type="text"
+      value={searchValue}
+      onChange={(e) => setSearchValue(e.target.value)}
+      placeholder="Wyszukaj..."
+    />
+    <button className="pdf-button" onClick={handleExportToPDF}><FaFilePdf />  PDF</button>
+    <button className="excel-button" onClick={handleExportToExcel}><FaFileExcel />  Excel</button>
+    <table className="table-container">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nazwa zmiennej</th>
+          <th>Kraj</th>
+          <th>Województwo</th>
+          <th>Typ szkoły</th>
+          <th>Płeć absolwenta</th>
+          <th>Rodzaj wskaźnika</th>
+          <th>Typ informacji z jednostką miary</th>
+          <th>Rok szkolny</th>
+          <th>Wartość</th>
+          <th>Flaga</th>
+          <th>Akcje</th>
+        </tr>
+      </thead>
+      <tbody>
+        {educationData
+          .filter((education) => {
+            const searchString = searchValue.toLowerCase();
+            const id = education.id.toLowerCase();
+            const nazwaZmiennej = education.nazwa_zmiennej.toLowerCase();
+            const kraj = education.kraj.toLowerCase();
+            const wojewodztwo = education.wojewodztwo.toLowerCase();
+            const typSzkoly = education.typ_szkoly.toLowerCase();
+            const plecAbsolwenta = education.plec_absolwenta.toLowerCase();
+            const rodzajWskaźnika = education.rodzaj_wskaznika.toLowerCase();
+            const typInformacji = education.typ_informacji_z_jednostka_miary.toLowerCase();
+            const rokSzkolny = education.rok_szkolny.toLowerCase();
+            const wartosc = education.wartosc.toString().toLowerCase();
+            const flaga = education.flaga.toString().toLowerCase();
+            return (
+              id.includes(searchString) ||
+              nazwaZmiennej.includes(searchString) ||
+              kraj.includes(searchString) ||
+              wojewodztwo.includes(searchString) ||
+              typSzkoly.includes(searchString) ||
+              plecAbsolwenta.includes(searchString) ||
+              rodzajWskaźnika.includes(searchString) ||
+              typInformacji.includes(searchString) ||
+              rokSzkolny.includes(searchString) ||
+              wartosc.includes(searchString) ||
+              flaga.includes(searchString)
+            );
+          })
+          .map((education, index) => (
+            <tr key={education.id} style={{ backgroundColor: index % 2 === 0 ? '#f2f2f2' : 'transparent' }}>
+              <td>{education.id}</td>
+              <td>{education.nazwa_zmiennej}</td>
+              <td>
+                {isEditing && editRow?.id === education.id ? (
+                  <input
+                    type="text"
+                    value={editRow.kraj}
+                    onChange={(e) => setEditRow({ ...editRow, kraj: e.target.value })}
+                    style={{ maxWidth: '70px' }}
+                  />
+                ) : (
+                  education.kraj
+                )}
+              </td>
+              <td>
+                {isEditing && editRow?.id === education.id ? (
+                  <input
+                    type="text"
+                    value={editRow.wojewodztwo}
+                    onChange={(e) => setEditRow({ ...editRow, wojewodztwo: e.target.value })}
+                    style={{ maxWidth: '70px' }}
+                  />
+                ) : (
+                  education.wojewodztwo
+                )}
+              </td>
+              <td>
+                {isEditing && editRow?.id === education.id ? (
+                  <input
+                    type="text"
+                    value={editRow.typ_szkoly}
+                    onChange={(e) => setEditRow({ ...editRow, typ_szkoly: e.target.value })}
+                    style={{ maxWidth: '90px' }}
+                  />
+                ) : (
+                  education.typ_szkoly
+                )}
+              </td>
+              <td>
+                {isEditing && editRow?.id === education.id ? (
+                  <input
+                    type="text"
+                    value={editRow.plec_absolwenta}
+                    onChange={(e) => setEditRow({ ...editRow, plec_absolwenta: e.target.value })}
+                    style={{ maxWidth: '65px' }}
+                  />
+                ) : (
+                  education.plec_absolwenta
+                )}
+              </td>
+              <td>
+                {isEditing && editRow?.id === education.id ? (
+                  <input
+                    type="text"
+                    value={editRow.rodzaj_wskaznika}
+                    onChange={(e) => setEditRow({ ...editRow, rodzaj_wskaznika: e.target.value })}
+                    style={{ maxWidth: '60px' }}
+                  />
+                ) : (
+                  education.rodzaj_wskaznika
+                )}
+              </td>
+              <td>
+                {isEditing && editRow?.id === education.id ? (
+                  <input
+                    type="text"
+                    value={editRow.typ_informacji_z_jednostka_miary}
+                    onChange={(e) => setEditRow({ ...editRow, typ_informacji_z_jednostka_miary: e.target.value })}
+                    style={{ maxWidth: '80px' }}
+                  />
+                ) : (
+                  education.typ_informacji_z_jednostka_miary
+                )}
+              </td>
+              <td>
+                {isEditing && editRow?.id === education.id ? (
+                  <input
+                    type="text"
+                    value={editRow.rok_szkolny}
+                    onChange={(e) => setEditRow({ ...editRow, rok_szkolny: e.target.value })}
+                    style={{ maxWidth: '70px' }}
+                  />
+                ) : (
+                  education.rok_szkolny
+                )}
+              </td>
+              <td>
+                {isEditing && editRow?.id === education.id ? (
+                  <input
+                    type="text"
+                    value={editRow.wartosc}
+                    onChange={(e) => setEditRow({ ...editRow, wartosc: Number(e.target.value) })}
+                    style={{ maxWidth: '30px' }}
+                  />
+                ) : (
+                  education.wartosc
+                )}
+              </td>
+              <td>
+                {isEditing && editRow?.id === education.id ? (
+                  <input
+                    type="text"
+                    value={editRow.flaga}
+                    onChange={(e) => setEditRow({ ...editRow, flaga: Number(e.target.value) })}
+                    style={{ maxWidth: '20px' }}
+                  />
+                ) : (
+                  education.flaga
+                )}
+              </td>
+              <td>
+                {isEditing && editRow?.id === education.id ? (
+                  <button onClick={handleSave}>Save</button>
+                ) : (
+                  <button onClick={() => handleEdit(education)}>Edit</button>
+                )}
+              </td>
+            </tr>
+          ))}
+      </tbody>
+    </table>
+  </div>
+)}
+{selectedTab === 'diagram' && (
+  <div>
+    <img src={Diagram1} alt="Diagram" className="image" />  
+    <h1>Diagram</h1>
+    <h2>Wybierz opcje</h2>
+    <div>
+      <label htmlFor="x-value">X Value:</label>
+      <select id="x-value" value={xValue} onChange={(e) => setXValue(e.target.value)}>
+        <option value="">Wybierz X Value</option>
+        <option value="id">ID</option>
+        <option value="nazwa_zmiennej">Nazwa zmiennej</option>
+        <option value="kraj">Kraj</option>
+        <option value="typ_szkoly">Typ szkoły</option>
+        <option value="plec_absolwenta">Płeć absolwenta</option>
+        <option value="rodzaj_wskaznika">Rodzaj wskaźnika</option>
+        <option value="typ_informacji_z_jednostka_miary">Typ informacji z jednostką miary</option>
+        <option value="rok_szkolny">Rok szkolny</option>
+        <option value="wartosc">Wartość</option>
+        <option value="flaga">Flaga</option>
+      </select>
+    </div>
+    <div>
+      <label htmlFor="y-value">Y Value:</label>
+      <select id="y-value" value={yValue} onChange={(e) => setYValue(e.target.value)}>
+        <option value="">Wybierz Y Value</option>
+        <option value="id">ID</option>
+        <option value="nazwa_zmiennej">Nazwa zmiennej</option>
+        <option value="kraj">Kraj</option>
+        <option value="typ_szkoly">Typ szkoły</option>
+        <option value="plec_absolwenta">Płeć absolwenta</option>
+        <option value="rodzaj_wskaznika">Rodzaj wskaźnika</option>
+        <option value="typ_informacji_z_jednostka_miary">Typ informacji z jednostką miary</option>
+        <option value="rok_szkolny">Rok szkolny</option>
+        <option value="wartosc">Wartość</option>
+        <option value="flaga">Flaga</option>
+      </select>
+    </div>
+    {xValue && yValue && (
+      <div>
+        <BarChart width={600} height={300} data={educationData.map(data => ({ [xValue]: data[xValue], [yValue]: data[yValue] }))}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey={xValue} />
+          <YAxis />
+          <Tooltip />
+          <Legend />
+          <Bar dataKey={yValue} fill="#8884d8" />
+        </BarChart>
+      </div>
+    )}
+  </div>
+)}
       {selectedTab === 'analysis' && (
   <div>
     <h1>Analysis</h1>
@@ -221,16 +427,10 @@ const EducationPage: React.FC = () => {
         ))}
       </ul>
     </div>
-    <div>
-      <h2>Correlation Analysis</h2>
-      <p>{correlationAnalysis}</p>
-    </div>
   </div>
 )}
-
       </div>
     </div>
   );
 };
-
 export default EducationPage;
