@@ -49,6 +49,44 @@ const PrisonersPage: React.FC = () => {
   const [yValue, setYValue] = useState<string>('');
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editRow, setEditRow] = useState<Prisoners| null>(null);
+  const [newRow, setNewRow] = useState<Prisoners>({
+    id: '',
+    variableName: '',
+    country: '',
+    prisonerType: '',
+    categoriesInmates: '',
+    sex: '',
+    informationTypeUnitofMeasure: '',
+    year: 0,
+    value: 0,
+  });
+  const [showAddRowForm, setShowAddRowForm] = useState<boolean>(false);
+
+  const handleAddNewRow = () => {
+    setShowAddRowForm(true);
+  };
+
+  const handleSaveNewRow = async () => {
+    try {
+      const response = await axios.post('https://localhost:7119/api/Prisoners', newRow);
+      console.log('Added new row:', response.data);
+      setPrisonersData([...prisonersData, response.data]);
+      setShowAddRowForm(false);
+      setNewRow({
+        id: '',
+        variableName: '',
+        country: '',
+        prisonerType: '',
+        categoriesInmates: '',
+        sex: '',
+        informationTypeUnitofMeasure: '',
+        year: 0,
+        value: 0,
+      });
+    } catch (error) {
+      console.error('Error adding new row:', error);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -170,8 +208,7 @@ const PrisonersPage: React.FC = () => {
     saveAs(excelBlob, 'prisoners.xlsx');
   };
   const handleExportDiagramToExcel = () => {
-    const diagramData = [{ sex: 'Male', value: 100 }, { sex: 'Female', value: 200 }]; // Dane dla wykresu
-  
+    const diagramData = [{ sex: 'Male', value: 100 }, { sex: 'Female', value: 200 }]; 
     const worksheet = XLSX.utils.json_to_sheet(diagramData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Diagram Data');
@@ -181,7 +218,7 @@ const PrisonersPage: React.FC = () => {
   };
   
   const handleExportAnalysisToExcel = () => {
-    const analysisData = [{ year: 2021, totalPrisoners: 500 }, { year: 2022, totalPrisoners: 600 }]; // Dane analizy
+    const analysisData = [{ year: 2021, totalPrisoners: 500 }, { year: 2022, totalPrisoners: 600 }]; 
   
     const worksheet = XLSX.utils.json_to_sheet(analysisData);
     const workbook = XLSX.utils.book_new();
@@ -251,6 +288,63 @@ const PrisonersPage: React.FC = () => {
     />
     <button className="pdf-button" onClick={handleExportToPDF}><FaFilePdf />  PDF</button>
     <button className="excel-button" onClick={handleExportToExcel}><FaFileExcel />  Excel</button>
+    <button className="add-button" onClick={handleAddNewRow} style={{ marginLeft: '20px' }}>Dodaj nowy wiersz</button>
+            {showAddRowForm && (
+              <div className="form">
+                  <input
+                  type="text"
+                  value={newRow.variableName}
+                  onChange={(e) => setNewRow({ ...newRow, variableName: e.target.value })}
+                  placeholder="Nazwa zmiennej"
+                />
+                <input
+                  type="text"
+                  value={newRow.country}
+                  onChange={(e) => setNewRow({ ...newRow, country: e.target.value })}
+                  placeholder="Kraj"
+                />
+                <input
+                  type="text"
+                  value={newRow.prisonerType}
+                  onChange={(e) => setNewRow({ ...newRow, prisonerType: e.target.value })}
+                  placeholder="Typ więźnia"
+                />
+                <input
+                  type="text"
+                  value={newRow.categoriesInmates}
+                  onChange={(e) => setNewRow({ ...newRow, categoriesInmates: e.target.value })}
+                  placeholder="Kategoria"
+                />
+                <input
+                  type="text"
+                  value={newRow.sex}
+                  onChange={(e) => setNewRow({ ...newRow, sex: e.target.value })}
+                  placeholder="Płeć"
+                />
+                <input
+                  type="number"
+                  value={newRow.informationTypeUnitofMeasure}
+                  onChange={(e) => setNewRow({ ...newRow, rok: Number(e.target.value) })}
+                  placeholder="Informacje"
+                />
+                <input
+                style={{ width: "65px" }}
+                  type="number"
+                  value={newRow.year}
+                  onChange={(e) => setNewRow({ ...newRow, year: Number(e.target.value) })}
+                  placeholder="Rok"
+                />
+                 <input
+                 style={{ width: "75px" }}
+                  type="number"
+                  value={newRow.value}
+                  onChange={(e) => setNewRow({ ...newRow, value: Number(e.target.value) })}
+                  placeholder="Wartość"
+                />
+                <button onClick={handleSaveNewRow}>Dodaj</button>
+    <button onClick={() => setShowAddRowForm(false)}>Anuluj</button>
+              </div>
+            )}
     <table className="table-container">
       <thead>
         <tr>

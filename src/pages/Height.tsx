@@ -120,7 +120,6 @@ const HeightPage: React.FC = () => {
       if (editRow) {
         const response = await axios.put(`https://localhost:7119/api/Height/${editRow.id}`, editRow);
         console.log('Saved changes:', response.data);
-        // Update heights state after saving
         const updatedHeights = heights.map(height => {
           if (height.id === editRow.id) {
             return editRow;

@@ -49,6 +49,42 @@ const VaccinationDataPage: React.FC = () => {
   const [yValue, setYValue] = useState<string>('');
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editRow, setEditRow] = useState<VaccinationData | null>(null);
+  const [showAddRowForm, setShowAddRowForm] = useState<boolean>(false);
+  const [newRow, setNewRow] = useState<VaccinationData>({
+    id: '',
+    nazwa_zmiennej: '',
+    kraj: '',
+    rodzaj_choroby: '',
+    czas_typ_szczepienia: '',
+    typ_informacji_z_jednostka_miary: '',
+    typ_inforamcji_z_jednostka_miary: '',
+    rok: 0,
+    wartosc:0,
+    zmienna: 0,
+  });
+
+  const handleSaveNewRow = async () => {
+    try {
+      const response = await axios.post('https://localhost:7119/api/VaccinationData', newRow);
+      console.log('Added new row:', response.data);
+      setVaccinationData([...vaccinationData, response.data]);
+      setShowAddRowForm(false);
+      setNewRow({
+        id: '',
+        nazwa_zmiennej: '',
+        kraj: '',
+        rodzaj_choroby: '',
+        czas_typ_szczepienia: '',
+        typ_informacji_z_jednostka_miary: '',
+        typ_inforamcji_z_jednostka_miary: '',
+        rok: 0,
+        wartosc:0,
+        zmienna: 0,
+      });
+    } catch (error) {
+      console.error('Error adding new row:', error);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -151,6 +187,10 @@ const VaccinationDataPage: React.FC = () => {
     }
   };
 
+  const handleAddNewRow = () => {
+    setShowAddRowForm(true);
+  };
+
   return (
     <div>
       <AppBar position="fixed" className="app-bar">
@@ -174,6 +214,64 @@ const VaccinationDataPage: React.FC = () => {
             />
             <button className="pdf-button" onClick={handleExportToPDF}><FaFilePdf />  PDF</button>
             <button className="excel-button" onClick={handleExportToExcel}><FaFileExcel />  Excel</button>
+            <button className="add-button" onClick={handleAddNewRow} style={{ marginLeft: '20px' }}>Dodaj nowy wiersz</button>
+           {showAddRowForm && (
+              <div className="form">
+                  <input
+                  type="text"
+                  value={newRow.nazwa_zmiennej}
+                  onChange={(e) => setNewRow({ ...newRow, nazwa_zmiennej: e.target.value })}
+                  placeholder="Nazwa zmiennej"
+                />
+                <input
+                  type="text"
+                  value={newRow.kraj}
+                  onChange={(e) => setNewRow({ ...newRow, kraj: e.target.value })}
+                  placeholder="Kraj"
+                />
+                <input
+                  type="text"
+                  value={newRow.rodzaj_choroby}
+                  onChange={(e) => setNewRow({ ...newRow, plec: e.target.value })}
+                  placeholder="Rodzaj choroby"
+                />
+                <input
+                  type="text"
+                  value={newRow.czas_typ_szczepienia}
+                  onChange={(e) => setNewRow({ ...newRow, wiek: e.target.value })}
+                  placeholder="Typ szczepienai"
+                />
+                <input
+                  type="text"
+                  value={newRow.typ_informacji_z_jednostka_miary}
+                  onChange={(e) => setNewRow({ ...newRow, typ_informacji_z_jednostka_miary: e.target.value })}
+                  placeholder="Typ informacji"
+                />
+                <input
+                  style={{ width: "65px" }}
+                  type="number"
+                  value={newRow.rok}
+                  onChange={(e) => setNewRow({ ...newRow, rok: Number(e.target.value) })}
+                  placeholder="Rok"
+                />
+                <input
+                  style={{ width: "65px" }}
+                  type="number"
+                  value={newRow.wartosc}
+                  onChange={(e) => setNewRow({ ...newRow, wartosc: Number(e.target.value) })}
+                  placeholder="Wartość"
+                />
+                 <input
+                   style={{ width: "65px" }}
+                  type="number"
+                  value={newRow.zmienna}
+                  onChange={(e) => setNewRow({ ...newRow, zmienna: Number(e.target.value) })}
+                  placeholder="Zmienna"
+                />
+                <button onClick={handleSaveNewRow}>Dodaj</button>
+    <button onClick={() => setShowAddRowForm(false)}>Anuluj</button>
+              </div>
+           )}
             <table className="table-container">
               <thead>
                 <tr>

@@ -51,6 +51,49 @@ const EducationPage: React.FC = () => {
   const [yValue, setYValue] = useState<string>('');
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editRow, setEditRow] = useState<Education | null>(null);
+  const [newRow, setNewRow] = useState<Education>({
+    id: '',
+    nazwa_zmiennej: '',
+    kraj: '',
+    wojewodztwo: '',
+    typ_szkoly: '',
+    plec_absolwenta: '',
+    rodzaj_wskaznika: '',
+    typ_informacji_z_jednostka_miary: '',
+    rok_szkolny:'',
+    wartosc: 0,
+    flaga:0,
+  });
+  const [showAddRowForm, setShowAddRowForm] = useState<boolean>(false);
+
+  const handleAddNewRow = () => {
+    setShowAddRowForm(true);
+  };
+
+  const handleSaveNewRow = async () => {
+    try {
+      const response = await axios.post('https://localhost:7119/api/Education', newRow);
+      console.log('Added new row:', response.data);
+      setEducationData([...educationData, response.data]);
+      setShowAddRowForm(false);
+      setNewRow({
+        id: '',
+    nazwa_zmiennej: '',
+    kraj: '',
+    wojewodztwo: '',
+    typ_szkoly: '',
+    plec_absolwenta: '',
+    rodzaj_wskaznika: '',
+    typ_informacji_z_jednostka_miary: '',
+    rok_szkolny:'',
+    wartosc: 0,
+    flaga:0,
+      });
+    } catch (error) {
+      console.error('Error adding new row:', error);
+    }
+  };
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -185,6 +228,70 @@ const EducationPage: React.FC = () => {
     />
     <button className="pdf-button" onClick={handleExportToPDF}><FaFilePdf />  PDF</button>
     <button className="excel-button" onClick={handleExportToExcel}><FaFileExcel />  Excel</button>
+    <button className="add-button" onClick={handleAddNewRow} style={{ marginLeft: '20px' }}>Dodaj nowy wiersz</button>
+            {showAddRowForm && (
+              <div className="form">
+                  <input
+                  type="text"
+                  value={newRow.nazwa_zmiennej}
+                  onChange={(e) => setNewRow({ ...newRow, nazwa_zmiennej: e.target.value })}
+                  placeholder="Nazwa zmiennej"
+                />
+                <input
+                style={{ width: "125px" }}
+                  type="text"
+                  value={newRow.kraj}
+                  onChange={(e) => setNewRow({ ...newRow, kraj: e.target.value })}
+                  placeholder="Kraj"
+                />
+                <input
+                  type="text"
+                  value={newRow.wojewodztwo}
+                  onChange={(e) => setNewRow({ ...newRow, wojewodztwo: e.target.value })}
+                  placeholder="Województwo"
+                />
+                <input
+                  type="text"
+                  value={newRow.typ_szkoly}
+                  onChange={(e) => setNewRow({ ...newRow, typ_szkoly: e.target.value })}
+                  placeholder="Szkoła"
+                />
+                <input
+                  type="text"
+                  value={newRow.plec_absolwenta}
+                  onChange={(e) => setNewRow({ ...newRow, plec_absolwenta: e.target.value })}
+                  placeholder="Płeć"
+                />
+                <input
+                  type="number"
+                  value={newRow.rodzaj_wskaznika}
+                  onChange={(e) => setNewRow({ ...newRow, rodzaj_wskaznika: e.target.value })}
+                  placeholder="Rodzaj"
+                />
+                <input
+                  type="number"
+                  value={newRow.typ_informacji_z_jednostka_miary}
+                  onChange={(e) => setNewRow({ ...newRow, typ_informacji_z_jednostka_miary: e.target.value })}
+                  placeholder="Typ informacji"
+                />
+                <input
+                style={{ width: "65px" }}
+                  type="number"
+                  value={newRow.wartosc}
+                  onChange={(e) => setNewRow({ ...newRow, wartosc: Number(e.target.value) })}
+                  placeholder="Wartość"
+                />
+                <input
+                style={{ width: "65px" }}
+                  type="number"
+                  value={newRow.flaga}
+                  onChange={(e) => setNewRow({ ...newRow, flaga: Number(e.target.value) })}
+                  placeholder="Flaga"
+                />
+                <button onClick={handleSaveNewRow}>Dodaj</button>
+    <button onClick={() => setShowAddRowForm(false)}>Anuluj</button>
+              </div>
+            )}
     <table className="table-container">
       <thead>
         <tr>
