@@ -5,6 +5,7 @@ import Height from "./pages/Height";
 import Education from "./pages/Education";
 import Prisoners from "./pages/prisoners";
 import Vaccination from "./pages/Vaccinaction";
+import Experiment from "./pages/Experiment";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 function App() {
@@ -17,6 +18,7 @@ function App() {
           <Route path="/education" element={<Education/>} />
           <Route path="/prisoners" element={<Prisoners/>} />
           <Route path="/vaccination" element={<Vaccination/>} />
+          <Route path="/experiment" element={<Experiment/>} />
         </>
       </Routes>
  

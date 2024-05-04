@@ -9,7 +9,7 @@ import educationImage from '../images/education_image.jpg';
 import prisonersImage from '../images/prisoners_image.jpg';
 import vaccinationImage from '../images/vaccination_image.jpg';
 import statisticsImage from '../images/statistics_image.png';
-
+import experimentImage from '../images/experiment.png';
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
 
@@ -28,6 +28,11 @@ const HomePage: React.FC = () => {
   const handleVaccinationButtonClick = () => {
     navigate('/vaccination');
   };
+
+  const handleExperimentButtonClick = () => {
+    navigate('/experiment');
+  };
+
 
   const handleStatisticsButtonClick = () => {
     window.location.href = 'https://stat.gov.pl'; 
@@ -70,6 +75,13 @@ const HomePage: React.FC = () => {
               Vaccination
               <img src={vaccinationImage} alt="Vaccination" className="button-image" />
               <div className="button-info">Informacje: Szczepienia w Polsce</div>
+            </Button>
+          </div>
+          <div className="button-item">
+            <Button variant="contained" color="primary" onClick={handleExperimentButtonClick}>
+            experiment
+              <img src={experimentImage} alt="Experimental" className="button-image" />
+              <div className="button-info">mozliwosć załądowania własnych danych</div>
             </Button>
           </div>
         </div>
