@@ -1,0 +1,15 @@
+.QueryBuilderTool{
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    align-items: flex-start;
+}
+
+.filtersList {
+    display: flex;
+}
+
+.filtersList span {
+    min-width: 550px;
+}

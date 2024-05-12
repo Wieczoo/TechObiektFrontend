@@ -8,7 +8,6 @@ import heightImage from '../images/height_image.jpeg';
 import educationImage from '../images/education_image.jpg';
 import prisonersImage from '../images/prisoners_image.jpg';
 import vaccinationImage from '../images/vaccination_image.jpg';
-import statisticsImage from '../images/statistics_image.png';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -29,9 +28,11 @@ const HomePage: React.FC = () => {
     navigate('/vaccination');
   };
 
-  const handleStatisticsButtonClick = () => {
-    window.location.href = 'https://stat.gov.pl'; 
-  };
+  const handleQueryBuilderButtonClick = () => {
+    navigate('/querybuilder');
+  }
+
+  
 
   return (
     <div>
@@ -56,6 +57,13 @@ const HomePage: React.FC = () => {
               <div className="button-info">Informacje: Edukacja w Polsce</div>
             </Button>
           </div>
+          <div className="button-item">
+            <Button variant="contained" color="primary" onClick={handleQueryBuilderButtonClick}>
+              Query Builder
+              {/* <img src={educationImage} alt="Education" className="button-image" />
+              <div className="button-info">Informacje: Edukacja w Polsce</div> */}
+            </Button>
+          </div>
         </div>
         <div className="button-column">
           <div className="button-item">
@@ -72,13 +80,10 @@ const HomePage: React.FC = () => {
               <div className="button-info">Informacje: Szczepienia w Polsce</div>
             </Button>
           </div>
+          
         </div>
       </div>
-      <div className="statistics-button-container"> {/* Kontener dla przycisku z obrazkiem */}
-        <Button variant="contained" color="primary" onClick={handleStatisticsButtonClick}>
-          <img src={statisticsImage} alt="Statistics" className="statistics-button-image" />
-        </Button>
-      </div>
+      
     </div>
   );
 };
